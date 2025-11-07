@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Tank Battle Game</title>
+<style>
+  body { margin: 0; overflow: hidden; background: #222; }
+  canvas { display: block; margin: auto; background: #333; border: 2px solid #555; }
+</style>
+</head>
+<body>
+<canvas id="game" width="800" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const tank1 = { x: 100, y: 250, color: "green", angle: 0, bullets: [] };
+const tank2 = { x: 700, y: 250, color: "red", angle: Math.PI, bullets: [] };
+
+const speed = 3;
+const bulletSpeed = 6;
+
+document.addEventListener("keydown", e => {
+  // Tank 1 controls (WASD + Space)
+  if (e.key === "w") tank1.y -= speed;
+  if (e.key === "s") tank1.y += speed;
+  if (e.key === "a") tank1.x -= speed;
+  if (e.key === "d") tank1.x += speed;
+  if (e.key === " ") shoot(tank1);
+
+  // Tank 2 controls (Arrow keys + Enter)
+  if (e.key === "ArrowUp") tank2.y -= speed;
+  if (e.key === "ArrowDown") tank2.y += speed;
+  if (e.key === "ArrowLeft") tank2.x -= speed;
+  if (e.key === "ArrowRight") tank2.x += speed;
+  if (e.key === "Enter") shoot(tank2);
+});
+
+function shoot(tank) {
+  const dx = Math.cos(tank.angle);
+  const dy = Math.sin(tank.angle);
+  tank.bullets.push({ x: tank.x, y: tank.y, dx, dy });
+}
+
+function drawTank(t) {
+  ctx.fillStyle = t.color;
+  ctx.beginPath();
+  ctx.arc(t.x, t.y, 20, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function updateBullets(t) {
+  for (let b of t.bullets) {
+    b.x += b.dx * bulletSpeed;
+    b.y += b.dy * bulletSpeed;
+  }
+  t.bullets = t.bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
+}
+
+function drawBullets(t) {
+  ctx.fillStyle = "yellow";
+  for (let b of t.bullets) {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function detectHit() {
+  for (let b of tank1.bullets) {
+    if (Math.hypot(b.x - tank2.x, b.y - tank2.y) < 20) {
+      alert("💥 Tank 1 wins!");
+      reset();
+    }
+  }
+  for (let b of tank2.bullets) {
+    if (Math.hypot(b.x - tank1.x, b.y - tank1.y) < 20) {
+      alert("💥 Tank 2 wins!");
+      reset();
+    }
+  }
+}
+
+function reset() {
+  tank1.x = 100; tank1.y = 250; tank1.bullets = [];
+  tank2.x = 700; tank2.y = 250; tank2.bullets = [];
+}
+
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawTank(tank1);
+  drawTank(tank2);
+  updateBullets(tank1);
+  updateBullets(tank2);
+  drawBullets(tank1);
+  drawBullets(tank2);
+  detectHit();
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
